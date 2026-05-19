@@ -1104,6 +1104,13 @@ void PipelineCompiler::CompileThreadPool_Start()
 	else
 		numCompileThreads = 2 + (cpuCoreCount - 3); // 2 plus one additionally for every extra core above 3
 
+#ifdef __ANDROID__
+	// Android devices are often thermally constrained and rely on big.LITTLE CPU layouts.
+	// Keep more cores free for render + emulation threads to reduce frame pacing spikes.
+	numCompileThreads = std::min(numCompileThreads, std::max(1u, cpuCoreCount / 2));
+	numCompileThreads = std::min(numCompileThreads, 4u); // conservative cap for mobile SoCs
+#endif
+
 	numCompileThreads = std::min(numCompileThreads, 8u); // cap at 8
 
 	for (uint32_t i = 0; i < numCompileThreads; i++)
